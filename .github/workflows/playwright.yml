@@ -1,0 +1,42 @@
+name: SIAKAD Polinema E2E Tests
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    timeout-minutes: 20
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Kode Sumber
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js Runtime
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: 'npm'
+
+    - name: Install Dependencies
+      run: npm ci
+
+    - name: Install Playwright Browser (Chromium)
+      run: npx playwright install --with-deps chromium
+
+    - name: Eksekusi Pengujian Playwright E2E
+      env:
+        SIAKAD_URL: ${{ secrets.SIAKAD_URL }}
+        SIAKAD_USER: ${{ secrets.SIAKAD_USER }}
+        SIAKAD_PASS: ${{ secrets.SIAKAD_PASS }}
+      run: npx playwright test --project=chromium
+
+    - name: Upload Test Report & Trace Artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: playwright-report
+        path: playwright-report/
+        retention-days: 14
